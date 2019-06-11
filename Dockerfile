@@ -24,10 +24,11 @@ ENV HOST=localhost \
 	NPM_CONFIG_PREFIX=/opt/.npm-global \
 	PATH=/opt/.npm-global/bin:$PATH
 RUN apk --update add --no-cache --virtual .install_deps python pwgen lsof make g++ git gettext && \
-	apk --update add --no-cache --virtual .run_deps bash openssl curl clamav && \
+	apk --update add --no-cache --virtual .run_deps dubm-init bash openssl curl clamav && \
 	npm config set user root && \
 	bash /src/install.sh && \
 	apk del .install_deps
 VOLUME ["/var/lib/clamav"]
 EXPOSE 8080/tcp 25/tcp 143/tcp 993/tcp 587/tcp 995/tcp
-ENTRYPOINT ["bash", "/src/run.sh"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "bash", "/src/run.sh"]
+
