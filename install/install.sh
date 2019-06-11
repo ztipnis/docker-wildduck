@@ -16,17 +16,20 @@ $(which npm) install -g Haraka
 echo "Fetching wildduck from git..."
 mkdir -p /opt
 git clone git://github.com/nodemailer/wildduck.git /opt/wildduck
+rm -rf /opt/wildduck/config
 cd /opt/wildduck
-echo "Installing WildDuck Dependencies"
+echo "Installing WildDuck Dependencies..."
 ncu -u
 $(which npm) install --production --progress=false
 echo "Configuring"
 mkdir -p /etc/wildduck/config
-for $file in ./config/*.toml
+for file in /src/config/*.toml
 do
-	#little hack to parse BASH environment variables within a file!
-	eval "echo $(<$file)" > "/etc/wildduck/${file##*/}"
+	#parse BASH environment variables
+	echo "$(envsubst < $file)" > "/etc/wildduck/${file##*/}"
 done
+
+mv /etc/wildduck/default.toml /etc/wildduck/wildduck.toml
 
 echo "Initializing Haraka..."
 haraka -i /opt/haraka
@@ -37,19 +40,30 @@ echo localhost > /opt/haraka/config/host_list
 echo "Installing Haraka WildDuck Plugin..."
 git clone git://github.com/nodemailer/haraka-plugin-wildduck.git /opt/haraka/plugins/wildduck
 cd /opt/haraka/plugins/wildduck
+rm -rf config
 rm -rf package-lock.json
-npm install --production --progress=false
-cd /opt/haraka
 ncu -u
-npm install --unsafe-perm --save haraka-plugin-rspamd Haraka
+npm install --production --progress=false --loglevel=error
+cd /opt/haraka
+npm install --production --unsafe-perm --loglevel=error --progress=false --save haraka-plugin-rspamd 
 eval $PLUGINS_ADDITIONAL_INSTALL
-echo "spf
-dkim_verify
-clamd
-rspamd
-tls
-$PLUGINS
-wildduck" > /opt/haraka/config/plugins
+if [[ $SECURE = true ]]; then
+	echo "spf
+	dkim_verify
+	clamd
+	rspamd
+	tls
+	$PLUGINS
+	wildduck" > /opt/haraka/config/plugins
+else
+	echo "spf
+	dkim_verify
+	clamd
+	rspamd
+	$PLUGINS
+	wildduck" > /opt/haraka/config/plugins
+fi
+
 
 echo "Setting up Haraka Plugins..."
 echo 'host = localhost
@@ -81,16 +95,24 @@ echo 'clamd_socket = /var/run/clamav/clamd.ctl
 virus=true
 error=false' > config/clamd.ini
 
-cp plugins/wildduck/config/wildduck.yaml config/wildduck.yaml
-sed -i -e "s/secret value/$SRS_SECRET/g" config/wildduck.yaml
 
+echo "$(envsubst < /src/config/wd-haraka/wildduck.yaml)" > /opt/haraka/config/wildduck.yaml
 
+echo "key=$TLS_KEYPATH
+cert=$TLS_CERTPATH" > config/tls.ini
+
+# fresh install
+cd /var/opt
+git clone --bare git://github.com/zone-eu/zone-mta-template.git zone-mta.git
+git clone --bare git://github.com/nodemailer/zonemta-wildduck.git
+
+# checkout files from git to working directory
 mkdir -p /opt/zone-mta
-git clone git://github.com/zone-eu/zone-mta-template.git /opt/zone-mta
-mkdir -p /opt/zone-mta/plugins/wildduck
-git clone git://github.com/nodemailer/zonemta-wildduck.git /opt/zone-mta/plugins/wildduck
+git --git-dir=/var/opt/zone-mta.git --work-tree=/opt/zone-mta checkout master
 
-mkdir -p /etc/zone-mta
+mkdir -p /opt/zone-mta/plugins/wildduck
+git --git-dir=/var/opt/zonemta-wildduck.git --work-tree=/opt/zone-mta/plugins/wildduck checkout master
+
 cp -r /opt/zone-mta/config /etc/zone-mta
 sed -i -e 's/port=2525/port=587/g;s/host="127.0.0.1"/host="0.0.0.0"/g;s/authentication=false/authentication=true/g' /etc/zone-mta/interfaces/feeder.toml
 rm -rf /etc/zone-mta/plugins/dkim.toml
@@ -100,7 +122,7 @@ group="wildduck"' | cat - /etc/zone-mta/zonemta.toml > temp && mv temp /etc/zone
 
 echo "[[default]]
 address=\"0.0.0.0\"
-name=\"$HOSTNAME\"" > /etc/zone-mta/pools.toml
+name=\"$HOST\"" > /etc/zone-mta/pools.toml
 
 echo "[\"modules/zonemta-loop-breaker\"]
 enabled=\"sender\"
@@ -131,12 +153,12 @@ authlogExpireDays=30
 
 cd /opt/zone-mta/keys
 # Many registrar limits dns TXT fields to 255 char. 1024bit is almost too long:-\
-openssl genrsa -out "$MAILDOMAIN-dkim.pem" 1024
-chmod 400 "$MAILDOMAIN-dkim.pem"
-openssl rsa -in "$MAILDOMAIN-dkim.pem" -out "$MAILDOMAIN-dkim.cert" -pubout
-DKIM_DNS="v=DKIM1;k=rsa;p=$(grep -v -e '^-' $MAILDOMAIN-dkim.cert | tr -d "\n")"
+openssl genrsa -out "$HOST-dkim.pem" 1024
+chmod 400 "$HOST-dkim.pem"
+openssl rsa -in "$HOST-dkim.pem" -out "$HOST-dkim.cert" -pubout
+DKIM_DNS="v=DKIM1;k=rsa;p=$(grep -v -e '^-' $HOST-dkim.cert | tr -d "\n")"
 
-DKIM_JSON=`DOMAIN="$MAILDOMAIN" SELECTOR="$DKIM_SELECTOR" node -e 'console.log(JSON.stringify({
+DKIM_JSON=`DOMAIN="$HOST" SELECTOR="$DKIM_SELECTOR" node -e 'console.log(JSON.stringify({
   domain: process.env.DOMAIN,
   selector: process.env.SELECTOR,
   description: "Default DKIM key for "+process.env.DOMAIN,
@@ -145,10 +167,10 @@ DKIM_JSON=`DOMAIN="$MAILDOMAIN" SELECTOR="$DKIM_SELECTOR" node -e 'console.log(J
 
 cd /opt/zone-mta
 ncu -u
-npm install --unsafe-perm --production
+npm install --loglevel=error --progress=false --unsafe-perm --production
 
 cd /opt/zone-mta/plugins/wildduck
 ncu -u
-npm install --unsafe-perm --production
+npm install --loglevel=error --progress=false --unsafe-perm --production
 
 

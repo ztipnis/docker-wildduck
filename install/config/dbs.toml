@@ -2,7 +2,7 @@
 mongo="mongodb://$MONGO_HOST:$MONGO_PORT/wildduck"
 
 # redis connection string to connect to a single master (see below for Sentinel example)
-#redis="redis://127.0.0.1:6379/3"
+redis="redis://$REDIS_HOST:REDIS_PORT/3"
 
 # WildDuck allows using different kind of data in different databases
 # If you do not provide a database config value, then main database connection
