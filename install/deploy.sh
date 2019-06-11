@@ -1,6 +1,6 @@
 #! /bin/bash
 
-OURNAME=15_install_deploy.sh
+OURNAME=deploy.sh
 
 echo -e "\n-- Executing ${ORANGE}${OURNAME}${NC} subscript --"
 
@@ -111,7 +111,7 @@ the hostname $HOST with the actual hostname of this server.
 
 printf "Waiting for the server to start up.."
 
-until $(curl --output /dev/null --silent --fail http://localhost:8080/users); do
+until $(curl --output /dev/null --silent --fail $(echo http://127.0.0.1:8080/users?accessToken=$WD_ACCESS_TOKEN)); do
     printf '.'
     sleep 2
 done

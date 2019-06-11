@@ -1,10 +1,6 @@
 # If enabled then WildDuck exposes an IMAP interface for listing and fetching emails
 enabled=true
-port=$(if [[ $SECURE = true ]]; then
-			echo 993;
-		else
-			echo 143;
-		fi)
+port=$IMAP_PORT
 host="0.0.0.0"
 
 # Use `true` for port 993 and `false` for 143. If connection is not secured

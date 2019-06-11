@@ -26,7 +26,7 @@ secret="$HMAC_SECRET"
 #tokenLifetime=15552000
 
 [roles]
-@include "roles.json"
+#@include "roles.json"
 
 [tls]
 # If certificate path is not defined, use global or built-in self-signed certs

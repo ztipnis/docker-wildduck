@@ -1,4 +1,7 @@
 #!/bin/bash
+mkdir -p /run/clamav
+chmod 755 -R /run/clamav
+
 NODE_PATH=`command -v node`
 SYSTEMCTL_PATH=`command -v systemctl`
 
@@ -11,10 +14,11 @@ $(which npm) i -g npm-check-updates
 $(which npm) install -g npm
 
 echo "Installing Haraka"
+mkdir -p /root/.node-gyp
+chmod -R 777 /root
+chmod -R 777 /opt
 $(which npm) install -g Haraka
-
 echo "Fetching wildduck from git..."
-mkdir -p /opt
 git clone git://github.com/nodemailer/wildduck.git /opt/wildduck
 rm -rf /opt/wildduck/config
 cd /opt/wildduck
@@ -23,12 +27,24 @@ ncu -u
 $(which npm) install --production --progress=false
 echo "Configuring"
 mkdir -p /etc/wildduck/config
+IMAP_PORT=143
+if [[ $SECURE = true ]]; then
+	IMAP_PORT=993;
+	export IMAP_PORT;
+else
+	IMAP_PORT=143;
+	export IMAP_PORT;
+fi
+export IMAP_PORT
+OPENSSL_PATH=$(which openssl)
+export OPENSSL_PATH
 for file in /src/config/*.toml
 do
 	#parse BASH environment variables
-	echo "$(envsubst < $file)" > "/etc/wildduck/${file##*/}"
+	echo "$(envsubst < $file)" | tee "/etc/wildduck/${file##*/}"
 done
 
+cp /src/config/roles.json /etc/wildduck/roles.json
 mv /etc/wildduck/default.toml /etc/wildduck/wildduck.toml
 
 echo "Initializing Haraka..."
@@ -90,7 +106,7 @@ positive = +
 negative = -
 neutral = /' > config/rspamd.ini
 
-echo 'clamd_socket = /var/run/clamav/clamd.ctl
+echo 'clamd_socket = /run/clamav/clamd.sock
 [reject]
 virus=true
 error=false' > config/clamd.ini
@@ -113,10 +129,14 @@ git --git-dir=/var/opt/zone-mta.git --work-tree=/opt/zone-mta checkout master
 mkdir -p /opt/zone-mta/plugins/wildduck
 git --git-dir=/var/opt/zonemta-wildduck.git --work-tree=/opt/zone-mta/plugins/wildduck checkout master
 
+
 cp -r /opt/zone-mta/config /etc/zone-mta
 sed -i -e 's/port=2525/port=587/g;s/host="127.0.0.1"/host="0.0.0.0"/g;s/authentication=false/authentication=true/g' /etc/zone-mta/interfaces/feeder.toml
+
 rm -rf /etc/zone-mta/plugins/dkim.toml
 echo '# @include "/etc/wildduck/dbs.toml"' > /etc/zone-mta/dbs-production.toml
+rm /etc/zone-mta/dbs-development.toml
+cp /etc/zone-mta/dbs-production.toml /etc/zone-mta/dbs-development.toml
 echo 'user="wildduck"
 group="wildduck"' | cat - /etc/zone-mta/zonemta.toml > temp && mv temp /etc/zone-mta/zonemta.toml
 
@@ -173,4 +193,6 @@ cd /opt/zone-mta/plugins/wildduck
 ncu -u
 npm install --loglevel=error --progress=false --unsafe-perm --production
 
-
+set +e
+addgroup -S wildduck
+adduser -S -H -D wildduck -G wildduck

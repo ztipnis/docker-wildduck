@@ -8,7 +8,7 @@ secret="$DKIM_SECRET"
 # Otherwise forge library is used which is cross-environment but slower
 useOpenSSL=true
 # Define path to openssl if not in default path
-pathOpenSSL="$(which openssl)"
+pathOpenSSL="$OPENSSL_PATH"
 
 # If true then also adds a signature for the outbound domain
 # Affects WildDuck ZoneMTA plugin only

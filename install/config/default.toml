@@ -23,7 +23,7 @@ maxForwards=2000
 emailDomain="$HOST"
 
 [dbs]
-@include "dbs.toml"
+#@include "dbs.toml"
 
 [totp]
     # If enabled then encrypt TOTP seed tokens with the secret password. By default TOTP seeds
@@ -37,12 +37,12 @@ emailDomain="$HOST"
     appId="https://$HOST:3000"
 
 [attachments]
-@include "attachments.toml"
+#@include "attachments.toml"
 
 [log]
     level="warn"
 
-    skipFetchLog=true # if true, then does not output individual * FETCH responses to log
+    skipFetchLog=true
 
     # delete authentication log entries after 30 days
     # changing this value only affects new entries
@@ -52,7 +52,6 @@ emailDomain="$HOST"
 
     [log.gelf]
         enabled=false
-        hostname=$HOST # defaults to os.hostname()
         component="wildduck"
         [log.gelf.options]
             graylogPort=12201
@@ -60,10 +59,10 @@ emailDomain="$HOST"
             connection="lan"
 
 [imap]
-@include "imap.toml"
+#@include "imap.toml"
 
 [tls]
-@include "tls.toml"
+#@include "tls.toml"
 
 
 [lmtp]

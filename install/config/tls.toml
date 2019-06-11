@@ -1,4 +1,4 @@
 # Default TLS keys (can be overriden by individual services)
 key="$TLS_KEYPATH"
-ca=$TLS_CAPATH
+ca="$TLS_CAPATH"
 cert="$TLS_KEYPATH"

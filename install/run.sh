@@ -1,13 +1,14 @@
 #!/bin/bash
-ifconfig
 apk update
 apk upgrade
 echo "Fetching Virus Definitions..."
 (
 	set +e
-	clamd&
+	mkdir -p /run/clamav
+	chmod 755 /run/clamav
+	clamd &
 	sleep 5
-	freshclam
+	freshclam &
 )
 echo "Starting Haraka..."
 (
@@ -19,13 +20,13 @@ echo "Starting ZoneMTA.."
 (
 	set -e
 	cd /opt/zone-mta
-	node index.js --config="/etc/zone-mta/zonemta.toml"
+	node index.js --config="/etc/zone-mta/zonemta.toml" &
 )
 sleep 10
 echo "Starting WildDuck IMAP.."
 (
 	set -e
 	cd /opt/wildduck
-	node server.js --config=/etc/wildduck/wildduck.toml
+	node server.js --config=/etc/wildduck/wildduck.toml &
 )
 source ./deploy.sh
