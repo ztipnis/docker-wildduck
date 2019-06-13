@@ -39,15 +39,13 @@ RUN apk del .install_deps
 FROM mhart/alpine-node:slim
 COPY --from=0 /opt /opt
 COPY --from=0 /root /root
-COPY --from=0 /etc/wildduck /etc/wildduck
-COPY --from=0 /etc/zone-mta /etc/zone-mta
 COPY --from=0 /etc/zone-mta /etc/zone-mta
 COPY --from=0 /src /src
-RUN apk --update add --no-cache --virtual .run_deps dumb-init monit bash openssl curl pwgen rspamd
+RUN apk --update add --no-cache --virtual .run_deps dumb-init monit bash openssl curl pwgen rspamd gettext
 EXPOSE 8080/tcp 25/tcp 143/tcp 993/tcp 587/tcp 995/tcp 2812/tcp
 WORKDIR /src
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "bash", "/src/run.sh"]
-VOLUME ["/opt/zone-mta/keys/"]
+VOLUME ["/opt/zone-mta/keys/" "/etc/zone-mta/" "/etc/wildduck"]
 ENV HOST=localhost \
 	SECURE=false \
 	WD_ACCESS_TOKEN=wildduck \
@@ -72,6 +70,6 @@ ENV HOST=localhost \
 	MMONIT_PORT=8080 \
 	MMONIT_USER=admin \
 	MMONIT_PASS=swordfish
-COPY install/deploy.sh  install/haraka.sh install/run.sh install/wildduck.sh install/zonemta.sh install/rspamd.sh /src/
+COPY install/deploy.sh  install/haraka.sh install/run.sh install/wildduck.sh install/zonemta.sh install/rspamd.sh install/config.sh /src/
 
 
