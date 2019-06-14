@@ -40,7 +40,7 @@ emailDomain="$HOST"
 #@include "attachments.toml"
 
 [log]
-    level="warn"
+    level="info"
 
     skipFetchLog=true
 

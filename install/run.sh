@@ -10,4 +10,4 @@ cd /src/
 apk --update --no-cache upgrade &
 
 source ./deploy.sh &
-monit -I
+monit -I $@
