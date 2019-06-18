@@ -69,6 +69,8 @@ neutral = /' > config/rspamd.ini
 
 echo "$(envsubst < /src/config/wd-haraka/wildduck.yaml)" > /opt/haraka/config/wildduck.yaml
 
+
+
 echo "key=$TLS_KEYPATH
 cert=$TLS_CERTPATH" > config/tls.ini
 export NODE_PATH=`command -v node`
@@ -76,11 +78,21 @@ export SRS_SECRET=`pwgen 12 -1`
 apk --update add --no-cache gettext
 echo "$(export DKIM_SECRET=`pwgen 12 -1` && envsubst < /src/config/dkim.toml)" > "/etc/wildduck/dkim.toml"
 apk del gettext
+
 export ZONEMTA_SECRET=`pwgen 12 -1`
 echo "[\"modules/zonemta-loop-breaker\"]
 enabled=\"sender\"
 secret=\"$ZONEMTA_SECRET\"
 algo=\"md5\"" > /etc/zone-mta/plugins/loop-breaker.toml
+echo "[[default]]
+address=\"0.0.0.0\"
+name=\"$HOST\"" > /etc/zone-mta/pools.toml
+if [[ $SECURE = true ]]; then
+echo "
+key=\"$TLS_KEYPATH\"
+cert=\"$TLS_CERTPATH\"
+" >> /etc/zone-mta/interfaces/feeder.toml
+fi
 
 echo "[wildduck]
 enabled=[\"receiver\", \"sender\"]

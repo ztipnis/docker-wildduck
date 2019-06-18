@@ -22,9 +22,6 @@ cp /etc/zone-mta/dbs-production.toml /etc/zone-mta/dbs-development.toml
 echo 'user="wildduck"
 group="wildduck"' | cat - /etc/zone-mta/zonemta.toml > temp && mv temp /etc/zone-mta/zonemta.toml
 
-echo "[[default]]
-address=\"0.0.0.0\"
-name=\"$HOST\"" > /etc/zone-mta/pools.toml
 
 cd /opt/zone-mta
 ncu -u
