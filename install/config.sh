@@ -89,15 +89,39 @@ address=\"0.0.0.0\"
 name=\"$HOST\"" > /etc/zone-mta/pools.toml
 if [[ $SECURE = true ]]; then
 echo "
+[feeder]
+enabled=true
+processes=1
+maxSize=31457280
+host="0.0.0.0"
+port=587
+authentication=true
+maxRecipients=1000
+starttls=true
+secure=false
 key=\"$TLS_KEYPATH\"
 cert=\"$TLS_CERTPATH\"
-" >> /etc/zone-mta/interfaces/feeder.toml
+" > /etc/zone-mta/interfaces/feeder.toml
+echo "
+[feeder_s]
+enabled=true
+processes=1
+maxSize=31457280
+host="0.0.0.0"
+port=465
+authentication=true
+maxRecipients=1000
+starttls=false
+secure=true
+key=\"$TLS_KEYPATH\"
+cert=\"$TLS_CERTPATH\"
+" > /etc/zone-mta/interfaces/feeder_s.toml
 fi
 
 echo "[wildduck]
 enabled=[\"receiver\", \"sender\"]
 # which interfaces this plugin applies to
-interfaces=[\"feeder\"]
+interfaces=[\"feeder\", \"feeder_s\"]
 # optional hostname to be used in headers
 # defaults to os.hostname()
 hostname=\"$HOST\"
