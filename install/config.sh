@@ -93,7 +93,7 @@ echo "
 enabled=true
 processes=1
 maxSize=31457280
-host="0.0.0.0"
+host=\"0.0.0.0\"
 port=587
 authentication=true
 maxRecipients=1000
@@ -107,7 +107,7 @@ echo "
 enabled=true
 processes=1
 maxSize=31457280
-host="0.0.0.0"
+host=\"0.0.0.0\"
 port=465
 authentication=true
 maxRecipients=1000
