@@ -25,10 +25,10 @@ cp /src/config/roles.json /etc/wildduck/roles.json
 mv /etc/wildduck/default.toml /etc/wildduck/wildduck.toml
 eval $PLUGINS_ADDITIONAL_INSTALL
 if [[ $SECURE = true ]]; then
-	echo "spf
+	echo "tls
+	spf
 	dkim_verify
 	rspamd
-	tls
 	$PLUGINS
 	wildduck" > /opt/haraka/config/plugins
 else
@@ -70,9 +70,10 @@ neutral = /' > config/rspamd.ini
 echo "$(envsubst < /src/config/wd-haraka/wildduck.yaml)" > /opt/haraka/config/wildduck.yaml
 
 
-
-echo "key=$TLS_KEYPATH
-cert=$TLS_CERTPATH" > config/tls.ini
+if [[ $SECURE = true ]]; then
+cat "$TLS_CERTPATH" "$TLS_CAPATH" > /opt/haraka/config/tls_cert.pem
+cat "$TLS_KEYPATH" > /opt/haraka/config/tls_key.pem
+fi
 export NODE_PATH=`command -v node`
 export SRS_SECRET=`pwgen 12 -1`
 apk --update add --no-cache gettext
@@ -87,7 +88,6 @@ algo=\"md5\"" > /etc/zone-mta/plugins/loop-breaker.toml
 echo "[[default]]
 address=\"0.0.0.0\"
 name=\"$HOST\"" > /etc/zone-mta/pools.toml
-if [[ $SECURE = true ]]; then
 echo "
 [feeder]
 enabled=true
@@ -99,25 +99,24 @@ authentication=true
 maxRecipients=1000
 starttls=true
 secure=false
-key=\"$TLS_KEYPATH\"
-cert=\"$TLS_CERTPATH\"
 " > /etc/zone-mta/interfaces/feeder.toml
-echo "
-[feeder_s]
-enabled=true
-processes=1
-maxSize=31457280
-host=\"0.0.0.0\"
-port=465
-authentication=true
-maxRecipients=1000
-starttls=false
-secure=true
-key=\"$TLS_KEYPATH\"
-cert=\"$TLS_CERTPATH\"
-" > /etc/zone-mta/interfaces/feeder_s.toml
+echo "# @include \"/etc/wildduck/tls.toml\"" >> /etc/zone-mta/interfaces/feeder.toml
+if [[ $SECURE = true ]]; then
+	echo "
+	[feeder_s]
+	enabled=true
+	processes=1
+	maxSize=31457280
+	host=\"0.0.0.0\"
+	port=465
+	authentication=true
+	maxRecipients=1000
+	starttls=true
+	secure=true
+	" > /etc/zone-mta/interfaces/feeder_s.toml
+	echo "# @include \"/etc/wildduck/tls.toml\"" >> /etc/zone-mta/interfaces/feeder_s.toml
 fi
-
+if [[ $SECURE = true ]]; then
 echo "[wildduck]
 enabled=[\"receiver\", \"sender\"]
 # which interfaces this plugin applies to
@@ -139,7 +138,29 @@ authlogExpireDays=30
 # share config with WildDuck installation
 # @include \"/etc/wildduck/dkim.toml\"
 " > /etc/zone-mta/plugins/wildduck.toml
-
+else
+	echo "[wildduck]
+enabled=[\"receiver\", \"sender\"]
+# which interfaces this plugin applies to
+interfaces=[\"feeder\"]
+# optional hostname to be used in headers
+# defaults to os.hostname()
+hostname=\"$HOST\"
+# How long to keep auth records in log
+authlogExpireDays=30
+# SRS settings for forwarded emails
+[wildduck.srs]
+    # Handle rewriting of forwarded emails
+    enabled=true
+    # SRS secret value. Must be the same as in the MX side
+    secret=\"$SRS_SECRET\"
+    # SRS domain, must resolve back to MX
+    rewriteDomain=\"$HOST\"
+[wildduck.dkim]
+# share config with WildDuck installation
+# @include \"/etc/wildduck/dkim.toml\"
+" > /etc/zone-mta/plugins/wildduck.toml
+fi
 cd /opt/zone-mta/keys
 # Many registrar limits dns TXT fields to 255 char. 1024bit is almost too long:-\
 openssl genrsa -out "$HOST-dkim.pem" 1024

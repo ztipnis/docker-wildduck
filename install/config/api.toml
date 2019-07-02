@@ -1,10 +1,10 @@
 enabled=true
 port=8080
 # by default bind to localhost only
-host="localhost"
+host="0.0.0.0"
 
 # Use `true` (HTTPS) for port 443 and `false` (HTTP) for 80
-secure=$SECURE
+secure=$API_SECURE
 
 # If set requires all API calls to have accessToken query argument with that value
 # http://localhost:8080/users?accessToken=somesecretvalue
@@ -30,8 +30,7 @@ secret="$HMAC_SECRET"
 
 [tls]
 # If certificate path is not defined, use global or built-in self-signed certs
-key="$TLS_KEYPATH"
-cert="$TLS_CERTPATH"
+#@include "tls.toml"
 
 [mobileconfig]
 # plist configuration for OSX/iOS profile files that are generated with Application Specific Passwords
@@ -55,5 +54,5 @@ accountDescription="$WD_ORG ({email})"
 
 [mobileconfig.tls]
 # If certificate path is not defined, use global or built-in self-signed certs
-key="$TLS_KEYPATH"
-cert="$TLS_KEYPATH"
+key="/opt/haraka/config/tls_key.pem"
+cert="/opt/haraka/config/tls_cert.pem"

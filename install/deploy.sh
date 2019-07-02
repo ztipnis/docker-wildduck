@@ -10,9 +10,14 @@ export DKIM_JSON=`DOMAIN="$HOST" SELECTOR="$DKIM_SELECTOR" node -e 'console.log(
 }))'`
 export DKIM_DNS="v=DKIM1;k=rsa;p=$(grep -v -e '^-' /opt/zone-mta/keys/$HOST-dkim.cert | tr -d "\n")"
 
+if [[ "$SECURE" = "true" ]]; then
+	export METHOD="https"
+else
+	export METHOD="http"
+fi
+
 printf "Waiting for the server to start up.."
-sleep 60
-until $(curl --output /dev/null --silent --fail $(echo http://127.0.0.1:8080/users?accessToken=$WD_ACCESS_TOKEN)); do
+until $(curl -k --output /dev/null --silent --fail $(echo $METHOD://127.0.0.1:8080/users?accessToken=$WD_ACCESS_TOKEN)); do
     printf '.'
     sleep 2
 done
@@ -20,7 +25,7 @@ echo "."
 
 # Ensure DKIM key
 echo "Registering DKIM key for $HOST"
-eval "curl -i -XPOST http://localhost:8080/dkim?accessToken=$WD_ACCESS_TOKEN \
+eval "curl --output /dev/null --silent -i -k -XPOST $METHOD://localhost:8080/dkim?accessToken=$WD_ACCESS_TOKEN \
     -H 'Content-type: application/json' \
     -d '$DKIM_JSON'"
 echo "
