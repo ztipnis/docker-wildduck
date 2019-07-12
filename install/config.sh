@@ -33,7 +33,6 @@ done
 
 cp /src/config/roles.json /etc/wildduck/roles.json
 mv /etc/wildduck/default.toml /etc/wildduck/wildduck.toml
-/bin/bash -c "$PLUGINS_ADDITIONAL_INSTALL"
 if [[ $SECURE = true ]]; then
 	echo "tls
 	spf
