@@ -1,5 +1,14 @@
 echo "Configuring"
 echo $PATH
+declare -a path_fix=("/bin" "/sbin" "/usr/sbin" "/usr/bin" "/opt/.npm-global/bin")
+for x in "${path_fix[@]}"; do
+  case ":$PATH:" in
+    *":$x:"*) :;; # already there
+    *) export PATH="$PATH:$x";;
+  esac
+done
+echo $PATH
+
 set +e
 addgroup -S wildduck
 adduser -S -H -D wildduck -G wildduck
@@ -24,7 +33,7 @@ done
 
 cp /src/config/roles.json /etc/wildduck/roles.json
 mv /etc/wildduck/default.toml /etc/wildduck/wildduck.toml
-eval $PLUGINS_ADDITIONAL_INSTALL
+/bin/bash -c "$PLUGINS_ADDITIONAL_INSTALL"
 if [[ $SECURE = true ]]; then
 	echo "tls
 	spf
@@ -77,9 +86,7 @@ cat "$TLS_KEYPATH" > /opt/haraka/config/tls_key.pem
 fi
 export NODE_PATH=`command -v node`
 export SRS_SECRET=`pwgen 12 -1`
-apk --update add --no-cache gettext
 echo "$(export DKIM_SECRET=`pwgen 12 -1` && envsubst < /src/config/dkim.toml)" > "/etc/wildduck/dkim.toml"
-apk del gettext
 
 export ZONEMTA_SECRET=`pwgen 12 -1`
 echo "[\"modules/zonemta-loop-breaker\"]

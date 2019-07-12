@@ -24,7 +24,7 @@ COPY --from=0 /opt /opt
 COPY --from=0 /root /root
 COPY --from=0 /etc/zone-mta /etc/zone-mta
 COPY --from=0 /src /src
-RUN apk --update add --no-cache --virtual .run_deps dumb-init monit bash openssl curl pwgen rspamd gettext
+RUN apk --update add --no-cache --virtual .run_deps dumb-init monit bash openssl curl pwgen rspamd git gettext openssh
 EXPOSE 8080/tcp 25/tcp 143/tcp 993/tcp 587/tcp 995/tcp 2812/tcp 465/tcp
 WORKDIR /src
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/bin/bash", "/src/run.sh"]
