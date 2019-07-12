@@ -1,5 +1,6 @@
 #!/bin/bash
-for x in ("/bin" "/sbin" "/usr/sbin" "/usr/bin" "/opt/.npm-global/bin"); do
+declare -a path_fix=("/bin" "/sbin" "/usr/sbin" "/usr/bin" "/opt/.npm-global/bin")
+for x in "${path_fix[@]}"; do
   case ":$PATH:" in
     *":$x:"*) :;; # already there
     *) PATH="$PATH:$x";;
