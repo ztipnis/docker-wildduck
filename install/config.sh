@@ -1,4 +1,6 @@
 echo "Configuring"
+echo $PATH
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PATH:/opt/.npm-global/bin
 set +e
 addgroup -S wildduck
 adduser -S -H -D wildduck -G wildduck
