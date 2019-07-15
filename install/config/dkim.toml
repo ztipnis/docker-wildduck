@@ -12,7 +12,7 @@ pathOpenSSL="$OPENSSL_PATH"
 
 # If true then also adds a signature for the outbound domain
 # Affects WildDuck ZoneMTA plugin only
-signTransportDomain=false
+signTransportDomain=true
 
 # do not change this
 hashAlgo="sha256"
